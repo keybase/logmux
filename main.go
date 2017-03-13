@@ -197,7 +197,7 @@ func processLine(buf []byte, tag string) []byte {
 	}
 	lst := len(buf) - 1
 	if buf[0] == '{' && buf[lst] == '}' {
-		buf = append(buf[0:lst], []byte(fmt.Sprintf(", \"tag\": %q}", tag))...)
+		buf = append(buf[0:lst], []byte(fmt.Sprintf(",\"tag\":%q}", tag))...)
 	} else {
 		tmp := append([]byte(tag), []byte(": ")...)
 		buf = append(tmp, buf...)
