@@ -190,6 +190,15 @@ func newBufferedReader(r io.Reader) *bufio.Reader {
 	return bufio.NewReaderSize(r, 1024*1024*4)
 }
 
+func hasNonSpace(buf []byte) bool {
+	for _, b := range buf {
+		if b != ' ' && b != '\t' && b != '\r' && b != '\n' {
+			return true
+		}
+	}
+	return false
+}
+
 func processLine(buf []byte, tag string) []byte {
 	buf = bytes.TrimSpace(buf)
 	if len(buf) == 0 {
@@ -197,7 +206,11 @@ func processLine(buf []byte, tag string) []byte {
 	}
 	lst := len(buf) - 1
 	if buf[0] == '{' && buf[lst] == '}' {
-		buf = append(buf[0:lst], []byte(fmt.Sprintf(",\"tag\":%q}", tag))...)
+		if hasNonSpace(buf[1:lst]) {
+			buf = append(buf[0:lst], []byte(fmt.Sprintf(",\"tag\":%q}", tag))...)
+		} else {
+			buf = []byte(fmt.Sprintf("{\"tag\":%q}", tag))
+		}
 	} else {
 		tmp := append([]byte(tag), []byte(": ")...)
 		buf = append(tmp, buf...)
@@ -257,7 +270,7 @@ func (m *Mux) Run() error {
 	}
 	ch := make(chan error, 10)
 	n := 0
-	isSingle = len(m.streams) == 1
+	isSingle := len(m.streams) == 1
 	for _, s := range m.streams {
 		n++
 		go Run(s, &m.logstash, ch, isSingle)
