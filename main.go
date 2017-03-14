@@ -233,12 +233,14 @@ func readOne(s Stream, l *LogstashService) error {
 // Run the given stream, reading incoming log lines from it, and outputting
 // tagged lines to logstash.  If there's an error, the send it to the given
 // channel.
-func Run(s Stream, l *LogstashService, ch chan<- error) {
+func Run(s Stream, l *LogstashService, ch chan<- error, single bool) {
 	for {
 		err := readOne(s, l)
 		if err != nil {
+			if !single {
+				fmt.Fprintf(os.Stderr, "%s: ending log read loop on condition: %s\n", s.Tag(), err)
+			}
 			ch <- err
-			fmt.Fprintf(os.Stderr, "%s: ending log read loop on condition: %s\n", s.Tag(), err)
 			break
 		}
 	}
@@ -254,12 +256,19 @@ func (m *Mux) Run() error {
 		return err
 	}
 	ch := make(chan error, 10)
+	n := 0
+	isSingle = len(m.streams) == 1
 	for _, s := range m.streams {
-		go Run(s, &m.logstash, ch)
+		n++
+		go Run(s, &m.logstash, ch, isSingle)
 	}
 	for err := range ch {
+		n--
 		if err != io.EOF {
 			return err
+		}
+		if n == 0 {
+			return nil
 		}
 	}
 	return nil
