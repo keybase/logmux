@@ -302,7 +302,7 @@ func parseStreamArg(raw string) (ret Stream, err error) {
 	if err == nil {
 		ret = &PipeStream{BaseStream: baseStream, fd: fd}
 	} else {
-		ret = &NamedPipeStream{BaseStream: baseStream, path: parts[1]}
+		ret = &NamedPipeStream{BaseStream: baseStream, path: parts[0]}
 	}
 	return ret, nil
 }
