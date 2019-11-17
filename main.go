@@ -111,15 +111,15 @@ func (n *NamedPipeStream) Open() error {
 // NamedPipeStream if it had been closed the previous iteration in the read
 // loop.
 func (n *NamedPipeStream) Preread() error {
-	if n.source == nil {
-		file, err := os.OpenFile(n.path, os.O_RDONLY, os.ModeNamedPipe)
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(os.Stderr, "opened named pipe for tag %s: %s\n", n.tag, n.path)
-		n.source = newBufferedReader(file)
+	if n.source != nil {
 		return nil
 	}
+	file, err := os.OpenFile(n.path, os.O_RDONLY, os.ModeNamedPipe)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "opened named pipe for tag %s: %s\n", n.tag, n.path)
+	n.source = newBufferedReader(file)
 	return nil
 }
 
